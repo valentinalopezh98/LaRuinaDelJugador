@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador: Ruina del Jugador</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   <style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
+    background: radial-gradient(circle at center, #111 0%, #000 100%);
+    color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  h1 {
+    color: #10e0f3;
+    text-shadow: 0 0 10px #00c1d1;
+    font-size: 2em;
+  }
+
+  h2 {
+    margin-top: 40px;
+    color: #00c1d1;
+    border-bottom: 1px solid #10e0f3;
+    padding-bottom: 5px;
+  }
+
+  label {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  input {
+    background-color: #222;
+    color: #f0f0f0;
+    border: 1px solid #888;
+    padding: 8px;
+    width: 250px;
+    border-radius: 5px;
+    margin-top: 5px;
+  }
+
+  button {
+    margin: 15px 10px 0 0;
+    padding: 10px 20px;
+    font-weight: bold;
+    background: linear-gradient(145deg, #00c1d1, #10e0f3);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 8px #10e0f3;
+    transition: transform 0.2s, box-shadow 0.3s;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px #10e0f3, 0 0 20px #3eefff;
+  }
+
+  .contenedor-principal{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+  }
+
+  .cont-izq{
+    width: 100%;
+    display: flex;
+    justify-content: right;
+  }
+
+    img{
+      max-width: 450px;
+    }
+
+   .cont-der{
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+  }
+
+  #resultados {
+    background-color: #1c1c1c;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    box-shadow: inset 0 0 10px #000;
+  }
+
+  #resultados p {
+    margin: 5px 0;
+    color: #eee;
+  }
+
+  canvas {
+    background-color: #222;
+    border-radius: 10px;
+    margin-top: 30px;
+    padding: 10px;
+    box-shadow: 0 0 10px #f0c04033;
+    max-width: 100%;
+  }
+
+   #grafico {
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+</style>
+
+</head>
+<body>
+  <h1>Simulador: La Ruina del Jugador</h1>
+  <div class="contenedor-principal">
+    <div class="cont-izq">
+       <img src="/hero-img2.png" alt="">
+    </div>
+    <div class="cont-der">
+      <label for="noches">Cantidad de noches a simular:</label>
+      <input type="number" id="noches" value="30" min="1" />
+
+      <label for="apuesta">Monto de la apuesta ($):</label>
+      <input type="number" id="apuesta" value="5" min="1" />
+
+      <label for="saldoInicial">Saldo inicial ($):</label>
+      <input type="number" id="saldoInicial" value="50" min="1" />
+
+      <label for="objetivo">Objetivo a alcanzar ($):</label>
+      <input type="number" id="objetivo" value="600" min="1" />
+
+      <div class="botones">
+        <button onclick="ejecutarSimulacion(false)">Simular sin 0</button>
+        <button onclick="ejecutarSimulacion(true)">Simular con 0</button>
+      </div>
+    </div>
+  </div>
+ 
+  
+  <h2>Resultados</h2>
+  <div id="resultados"></div>
+
+  <canvas id="grafico"></canvas>
+  <canvas id="graficoEvolucion"></canvas>
+
+  <script>
+    // Paso 0: Construcción del modelo
+    function simularNoche(
+      conCero = false, 
+      //guarda o no el historial de saldo de una noche
+      guardarEvolucion = false, 
+      apuesta = 5, 
+      saldoInicial = 50, 
+      objetivo = 600
+      ){
+        let saldo = saldoInicial;
+        const maxNumero = conCero ? 37 : 36;
+        // se inicializa el historial con el saldo inicial
+        const historial = [saldo]; 
+        let apuestas = 0;
+
+        // Paso 3: iterar apuestas hasta que se cumpla una condición de corte
+        while (saldo >= apuesta && saldo < objetivo) {
+          // Paso 1: generar números aleatorios
+          const resultado = Math.floor(Math.random() * maxNumero) + 1; 
+
+          // Paso 2: transformar aleatorio en entrada válida
+          if (resultado >= 1 && resultado <= 18) {
+            saldo += apuesta; // gana
+          } else {
+            saldo -= apuesta; // pierde
+          }
+
+          apuestas++;
+          if (guardarEvolucion) historial.push(saldo);
+        }
+
+        return {
+          exito: saldo >= objetivo,
+          historial: guardarEvolucion ? historial : [],
+          apuestas //cantidad de apuestas
+        };
+    }
+
+    // Paso 4: ejecutar múltiples noches y calcular estadísticas
+    function simularVariasNoches(cantidad, conCero = false, apuesta = 5, saldoInicial = 50, objetivo = 600) {
+      let exitos = 0;
+      let totalApuestas = 0; 
+      //guarda la evolución del saldo de la primera noche para graficar
+      let historialEjemplo = [];
+
+      for (let i = 0; i < cantidad; i++) { //Simula cada noche
+        const resultado = simularNoche(conCero, i === 0, apuesta, saldoInicial, objetivo);
+        if (resultado.exito) exitos++;
+        totalApuestas += resultado.apuestas;
+        if (i === 0) historialEjemplo = resultado.historial;
+      }
+
+      return {
+        exitos,
+        fracasos: cantidad - exitos,
+        porcentaje: (exitos / cantidad * 100).toFixed(2),
+        promedioApuestas: (totalApuestas / cantidad).toFixed(2),
+        historialEjemplo
+      };
+    }
+
+    function ejecutarSimulacion(conCero) {
+      const noches = parseInt(document.getElementById("noches").value);
+      const apuesta = parseInt(document.getElementById("apuesta").value);
+      const saldoInicial = parseInt(document.getElementById("saldoInicial").value);
+      const objetivo = parseInt(document.getElementById("objetivo").value);
+
+      const resultado = simularVariasNoches(noches, conCero, apuesta, saldoInicial, objetivo);
+
+      document.getElementById("resultados").innerHTML = `
+        <p><strong>Con 0:</strong> ${conCero ? "Sí" : "No"}</p>
+        <p><strong>Éxitos (llegó al objetivo):</strong> ${resultado.exitos}</p>
+        <p><strong>Fracasos (ruina):</strong> ${resultado.fracasos}</p>
+        <p><strong>Porcentaje de éxito:</strong> ${resultado.porcentaje}%</p>
+        <p><strong>Promedio de apuestas por noche:</strong> ${resultado.promedioApuestas}</p>
+      `;
+
+      dibujarGrafico(resultado);
+      dibujarGraficoEvolucion(resultado.historialEjemplo);
+    }
+
+    let resultadosPie;
+    function dibujarGrafico(resultado) {
+      const ctx = document.getElementById("grafico").getContext("2d");
+      if (resultadosPie) resultadosPie.destroy();
+
+      resultadosPie = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: ["Éxitos", "Fracasos"],
+          datasets: [{
+            data: [resultado.exitos, resultado.fracasos],
+            backgroundColor: ["#00c1d1", "#e2577b"],
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: "Distribución de resultados"
+            }
+          }
+        },
+      });
+    }
+
+    let graficoEvolucion;
+    function dibujarGraficoEvolucion(historial) {
+      const ctx = document.getElementById("graficoEvolucion").getContext("2d");
+      if (graficoEvolucion) graficoEvolucion.destroy();
+
+      graficoEvolucion = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: historial.map((_, i) => i),
+          datasets: [{
+            label: "Evolución del saldo (1ra noche)",
+            data: historial,
+            borderColor: "#00c1d1",
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              title: {
+                display: true,
+                text: 'Saldo ($)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Apuesta n°'
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
