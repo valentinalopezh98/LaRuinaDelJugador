@@ -79,16 +79,16 @@
     justify-content: right;
   }
 
-    img{
-      max-width: 450px;
-    }
+  img{
+    max-width: 450px;
+  }
 
-   .cont-der{
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
+  .cont-der{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
   }
 
   #resultados {
@@ -113,11 +113,34 @@
     max-width: 100%;
   }
 
-   #grafico {
+  #grafico {
       max-width: 600px;
       margin-left: auto;
       margin-right: auto;
     }
+
+  #detalleNoches p {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: aparecer 0.5s ease forwards;
+  }
+
+  @keyframes aparecer {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  #detalleNoches {
+  margin-top: 20px;
+  }
+
+  #detalleNoches p {
+  margin: 4px 0;
+  }
+
+
 </style>
 
 </head>
@@ -149,8 +172,9 @@
  
   
   <h2>Resultados</h2>
+  <div id="detalleNoches"></div>
   <div id="resultados"></div>
-
+  
   <canvas id="grafico"></canvas>
   <canvas id="graficoEvolucion"></canvas>
 
@@ -195,26 +219,42 @@
 
     // Paso 4: ejecutar múltiples noches y calcular estadísticas
     function simularVariasNoches(cantidad, conCero = false, apuesta = 5, saldoInicial = 50, objetivo = 600) {
-      let exitos = 0;
-      let totalApuestas = 0; 
-      //guarda la evolución del saldo de la primera noche para graficar
-      let historialEjemplo = [];
+    let exitos = 0;
+    let totalApuestas = 0;
+    let historialEjemplo = [];
+    const detalleContenedor = document.getElementById("detalleNoches");
+    detalleContenedor.innerHTML = ""; // Limpiar resultados anteriores
 
-      for (let i = 0; i < cantidad; i++) { //Simula cada noche
-        const resultado = simularNoche(conCero, i === 0, apuesta, saldoInicial, objetivo);
-        if (resultado.exito) exitos++;
-        totalApuestas += resultado.apuestas;
-        if (i === 0) historialEjemplo = resultado.historial;
-      }
+    for (let i = 0; i < cantidad; i++) {
+      const resultado = simularNoche(conCero, i === 0, apuesta, saldoInicial, objetivo);
+      if (resultado.exito) exitos++;
+      totalApuestas += resultado.apuestas;
+      if (i === 0) historialEjemplo = resultado.historial;
 
-      return {
-        exitos,
-        fracasos: cantidad - exitos,
-        porcentaje: (exitos / cantidad * 100).toFixed(2),
-        promedioApuestas: (totalApuestas / cantidad).toFixed(2),
-        historialEjemplo
-      };
+      // Crear el resumen por noche con efecto de aparición
+      setTimeout(() => {
+        const p = document.createElement("p");
+        p.innerHTML = `<strong>Noche ${i + 1}:</strong> ${resultado.exito ? "Éxito ✅" : "Ruina 💀"} | Apuestas: ${resultado.apuestas}`;
+        p.style.opacity = 0;
+        p.style.transform = "translateY(10px)";
+        p.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+        detalleContenedor.appendChild(p);
+        setTimeout(() => {
+          p.style.opacity = 1;
+          p.style.transform = "translateY(0)";
+        }, 10);
+      }, i * 100); // efecto en cascada
     }
+
+    return {
+      exitos,
+      fracasos: cantidad - exitos,
+      porcentaje: (exitos / cantidad * 100).toFixed(2),
+      promedioApuestas: (totalApuestas / cantidad).toFixed(2),
+      historialEjemplo
+    };
+}
+
 
     function ejecutarSimulacion(conCero) {
       const noches = parseInt(document.getElementById("noches").value);
