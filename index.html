@@ -163,6 +163,10 @@
       <label for="objetivo">Objetivo a alcanzar ($):</label>
       <input type="number" id="objetivo" value="600" min="1" />
 
+      <input type="checkbox" id="mostrarPasoAPaso" />
+      <label for="mostrarPasoAPaso">Mostrar paso a paso de la 1ra noche</label>
+
+
       <div class="botones">
         <button onclick="ejecutarSimulacion(false)">Simular sin 0</button>
         <button onclick="ejecutarSimulacion(true)">Simular con 0</button>
@@ -218,7 +222,7 @@
     }
 
     // Paso 4: ejecutar múltiples noches y calcular estadísticas
-    function simularVariasNoches(cantidad, conCero = false, apuesta = 5, saldoInicial = 50, objetivo = 600) {
+    function simularVariasNoches(cantidad, conCero = false, apuesta = 5, saldoInicial = 50, objetivo = 600, mostrarPasoAPaso) {
     let exitos = 0;
     let totalApuestas = 0;
     let historialEjemplo = [];
@@ -232,7 +236,8 @@
       if (i === 0) historialEjemplo = resultado.historial;
 
       // Crear el resumen por noche con efecto de aparición
-      setTimeout(() => {
+      if (mostrarPasoAPaso){
+        setTimeout(() => {
         const p = document.createElement("p");
         p.innerHTML = `<strong>Noche ${i + 1}:</strong> ${resultado.exito ? "Éxito ✅" : "Ruina 💀"} | Apuestas: ${resultado.apuestas}`;
         p.style.opacity = 0;
@@ -244,6 +249,8 @@
           p.style.transform = "translateY(0)";
         }, 10);
       }, i * 100); // efecto en cascada
+      }
+    
     }
 
     return {
@@ -261,8 +268,8 @@
       const apuesta = parseInt(document.getElementById("apuesta").value);
       const saldoInicial = parseInt(document.getElementById("saldoInicial").value);
       const objetivo = parseInt(document.getElementById("objetivo").value);
-
-      const resultado = simularVariasNoches(noches, conCero, apuesta, saldoInicial, objetivo);
+      const mostrarPasoAPaso = document.getElementById("mostrarPasoAPaso").checked;
+      const resultado = simularVariasNoches(noches, conCero, apuesta, saldoInicial, objetivo,mostrarPasoAPaso);
 
       document.getElementById("resultados").innerHTML = `
         <p><strong>Con 0:</strong> ${conCero ? "Sí" : "No"}</p>
